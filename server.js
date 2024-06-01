@@ -1,7 +1,11 @@
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
+const cors = require('cors')
+const corsOptions = require('./configs/cors-options')
 const PORT = process.env.PORT || 3500
+
+app.use(cors(corsOptions))
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
