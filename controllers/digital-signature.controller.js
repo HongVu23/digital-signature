@@ -1,4 +1,5 @@
 const crypto = require('crypto')
+const publicKeyBase64UrlLength = 392 // standard length for public key which create from rsa type and modulusLength is 2048
 
 // generate key pair
 const generateKeyPair = (req, res) => {
@@ -15,7 +16,7 @@ const generateKeyPair = (req, res) => {
         }
     })
 
-    return res.json({ publicKey: publicKey.toString('base64'), privateKey: privateKey.toString('base64') })
+    return res.json({ publicKey: publicKey.toString('base64url'), privateKey: privateKey.toString('base64url')})
 }
 
 // sign
@@ -24,7 +25,7 @@ const sign = (req, res) => {
     let { privateKey, data } = req.body
 
     privateKey = crypto.createPrivateKey({
-        key: Buffer.from(privateKey, 'base64'),
+        key: Buffer.from(privateKey, 'base64url'),
         type: 'pkcs8',
         format: 'der'
     })
@@ -32,19 +33,21 @@ const sign = (req, res) => {
     const sign = crypto.createSign('SHA256')
     sign.update(data)
     sign.end()
-    const signature = sign.sign(privateKey).toString('base64')
+    const signature = sign.sign(privateKey).toString('base64url')
 
     return res.json({ data, signature })
 }
 
 // verify
-const verify = (req, res, next) => {
+const verify = (req, res) => {
 
     let { data, publicKey, signature } = req.body
 
+    if (publicKey.length > publicKeyBase64UrlLength) return res.json({ verify: false })
+
     try {
         publicKey = crypto.createPublicKey({
-            key: Buffer.from(publicKey, 'base64'),
+            key: Buffer.from(publicKey, 'base64url'),
             type: 'spki',
             format: 'der'
         })
@@ -56,7 +59,7 @@ const verify = (req, res, next) => {
     verify.update(data)
     verify.end()
 
-    const result = verify.verify(publicKey, Buffer.from(signature, 'base64'));
+    const result = verify.verify(publicKey, Buffer.from(signature, 'base64url'));
     return res.json({ verify: result })
 }
 
