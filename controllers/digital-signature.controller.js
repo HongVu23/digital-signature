@@ -38,21 +38,25 @@ const sign = (req, res) => {
 }
 
 // verify
-const verify = (req, res) => {
+const verify = (req, res, next) => {
 
     let { data, publicKey, signature } = req.body
 
-    publicKey = crypto.createPublicKey({
-        key: Buffer.from(publicKey, 'base64'),
-        type: 'spki',
-        format: 'der'
-    })
+    try {
+        publicKey = crypto.createPublicKey({
+            key: Buffer.from(publicKey, 'base64'),
+            type: 'spki',
+            format: 'der'
+        })
+    } catch (err) {
+        return res.json({ verify: false })
+    }
 
     const verify = crypto.createVerify('SHA256')
     verify.update(data)
     verify.end()
 
-    const result = verify.verify(publicKey, Buffer.from(signature, 'base64'))
+    const result = verify.verify(publicKey, Buffer.from(signature, 'base64'));
     return res.json({ verify: result })
 }
 
